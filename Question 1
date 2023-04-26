@@ -1,9 +1,9 @@
 import numpy as np
 
 class Engine:
-    def __init__(self, reward, correctProbability):
+    def __init__(self, reward, cpr):
         self.REWARD = reward
-        self.PROBABILITY = correctProbability
+        self.pr = cpr
         self.next = None
 
 class Agent:
@@ -12,17 +12,13 @@ class Agent:
         self.THETA = 0.0001
         self.DISCOUNT_FACTOR = 0.9
         self.action = ["PLAY", "QUIT"]
-        
         REWARDS = [100, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000, 5000000]
         pb = [0.99, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1]
-        
         Intial = Engine(-1,0)
         TEMP = Intial
-        
         for i in range(self.N):  
             TEMP.next = Engine(REWARDS[i],pb[i])
             TEMP = TEMP.next
-        
         self.START_STATE = Intial.next        
 
 class MDP_SOLUTION:
@@ -36,23 +32,18 @@ class MDP_SOLUTION:
     def helper(self, state, itr):
         if(state == None): return 0
         self.reach[itr] += 1
-    
         old = self.vf[itr]
         reward = 0
         if itr == 0:
             gamma = 0
         else:
             gamma = self.vf[itr-1]
-        
         ans = np.random.rand()
-        
-        if ans <= state.PROBABILITY:
-            reward = state.PROBABILITY * (state.REWARD + (self.agent.DISCOUNT_FACTOR * self.helper(state.next, itr+1)))
+        if ans <= state.pr:
+            reward = state.pr * (state.REWARD + (self.agent.DISCOUNT_FACTOR * self.helper(state.next, itr+1)))
             self.vf[itr] = (self.vf[itr] * self.reach[itr] + reward)/(self.reach[itr]+1)
-            
             if(abs(self.vf[itr] - old) < self.agent.THETA):
                 self.TERMINATOR = True
-
         return max(gamma, reward)
     
     def solver(self):
@@ -60,18 +51,13 @@ class MDP_SOLUTION:
             self.increment += 1
             HEAD = self.agent.START_STATE
             self.helper(HEAD, 0)
-        
         print("Total increment: ", self.increment)
         print("VALUE FUNCTION:")
         print(self.vf)
-        
         for i in range(self.agent.N):
             self.reach[i] = (self.reach[i] / self.increment) * 100
-        
         EXPECTATION = 0
         for i in range(self.agent.N):
             EXPECTATION = EXPECTATION + ((self.reach[i]/100) * self.vf[i])
-        
         print("EXPECTED REWARD: ", EXPECTATION)
-
 MDP_SOLUTION().solver()
